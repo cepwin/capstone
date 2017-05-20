@@ -1,0 +1,201 @@
+---
+title: "Milestone Report"
+author: "Wendy Sarrett"
+date: "May 6, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+The purpose of this report is to provide first and exploratory analysis of the en_US corpus data.  This will consist of tri-gram frequency for all three documents in the corpus (blogs, news and twitter.)  A tri-gram is essentially a group of three words as they appear together in the document.   For example if you have a sentence "The Quick Brown fox jumps over the lazy dog."  you would have tri-grams "The Quick Brown", "Quick Brown Fox", "Brown Fox jumped","Fox jumped over", "jumped over the", "over the lazy" and "the lazy dog."  We will also show a summary of each of the three documents in the corpus and the most common words from a sample of each of the three documents.  This will allow us to get a feeling for the data and the differences between the three groups of data.
+
+The second part will discuss our plans for a predictive model and shiny application that will use our predictive model.
+
+```{r analysis, echo=FALSE, message=FALSE, warning=FALSE,results='hide',cache=TRUE}
+
+require(tm)
+require(ngram)
+require(filehash)
+require(ggplot2)
+library(dplyr)
+library(tidytext)
+
+
+ovid<-VCorpus(DirSource("./final/en_US/")) 
+ovid<-tm_map(ovid, stripWhitespace)
+ovid<-tm_map(ovid,tolower)
+ovid<-tm_map(ovid,removePunctuation)
+ovid<-tm_map(ovid,removeWords,stopwords("english"))
+
+strBlogs<-ovid[[1]]
+lenBlogs <-length(strBlogs)
+groups<-lenBlogs/10000 + 1
+lStrBlogs<-""
+for(i in 1:groups) {
+  st<- (i-1)*10000 + 1
+  end<-min(c(i*10000,lenBlogs))
+  lStrBlogs<- concatenate(lStrBlogs,concatenate(lapply(strBlogs[st:end],"[",1)))
+}
+small<-ovid[[1]][1:10000]
+corp<-Corpus(VectorSource(small))
+dtmBlog<-DocumentTermMatrix(corp)
+
+xx<-as.matrix(dtmBlog)
+xxdf<-as.data.frame.matrix(xx)
+cs<-colSums(xxdf)
+terms<-cbind(names(xxdf),as.vector(as.numeric(cs)))
+dfTerms<-as.data.frame(terms)
+names(dfTerms)<-c("Term","Count")
+dfSortBlog<-dfTerms[order(dfTerms[2]),]
+
+
+summBlogs<-string.summary(lStrBlogs)
+ng2Blogs<-ngram(lStrBlogs,3)
+pt2Blogs<-get.phrasetable(ng2Blogs)
+
+gp2Blogs<-ggplot(pt2Blogs[1:20,],aes(x=ngrams, y=freq)) +  geom_col() + theme(axis.text.x=element_text(angle = 90, vjust = 0.5))  + ggtitle("Blogs - top 20 trigrams")
+
+strNews<-ovid[[2]]
+lenNews <-length(strNews)
+groups<-lenNews/10000 + 1
+lStrNews<-""
+for(i in 1:groups) {
+  st<- (i-1)*10000 + 1
+  end<-min(c(i*10000,lenNews))
+  lStrNews<- concatenate(lStrNews,concatenate(lapply(strNews[st:end],"[",1)))
+}
+small<-ovid[[2]][1:10000]
+corp<-Corpus(VectorSource(small))
+dtmNews<-DocumentTermMatrix(corp)
+xx<-as.matrix(dtmNews)
+xxdf<-as.data.frame.matrix(xx)
+cs<-colSums(xxdf)
+terms<-cbind(names(xxdf),as.vector(as.numeric(cs)))
+dfTerms<-as.data.frame(terms)
+names(dfTerms)<-c("Term","Count")
+dfSortNews<-dfTerms[order(dfTerms[2]),]
+
+summNews<-string.summary(lStrNews)
+ng2News<-ngram(lStrNews,3)
+pt2News<-get.phrasetable(ng2News)
+
+gp2News<-ggplot(pt2News[1:20,],aes(x=ngrams, y=freq)) +  geom_col() +  theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) +  ggtitle("News - top 20 trigrams")
+
+strTwit<-ovid[[3]]
+lenTwit <-length(strTwit)
+groups<-lenTwit/10000 + 1
+lStrTwit<-""
+for(i in 1:groups) {
+  st<- (i-1)*10000 + 1
+  end<-min(c(i*10000,lenTwit))
+  lStrTwit<- concatenate(lStrTwit,concatenate(lapply(strTwit[st:end],"[",1)))
+}
+small<-ovid[[3]][1:10000]
+corp<-Corpus(VectorSource(small))
+dtmTwit<-DocumentTermMatrix(corp)
+xx<-as.matrix(dtmTwit)
+xxdf<-as.data.frame.matrix(xx)
+cs<-colSums(xxdf)
+terms<-cbind(names(xxdf),as.vector(as.numeric(cs)))
+dfTerms<-as.data.frame(terms)
+names(dfTerms)<-c("Term","Count")
+dfSortTwit<-dfTerms[order(dfTerms[2]),]
+
+summTwit<-string.summary(lStrTwit)
+ng2Twit<-ngram(lStrTwit,3)
+pt2Twit<-get.phrasetable(ng2Twit)
+
+gp2Twit<-ggplot(pt2Twit[1:20,],aes(x=ngrams, y=freq)) +  geom_col()  + theme(axis.text.x=element_text(angle = 90, vjust = 0.5))  + ggtitle("Twitter - top 20 trigrams")
+
+
+                                                                         
+```
+
+## Analysis
+
+These graphs are the top 20 phases (ngrams) from each dataset (blogs, news and twitter)
+
+```{r pressure, echo=FALSE, message=FALSE, warning=FALSE}
+
+print(gp2Blogs)
+
+print(gp2News)
+
+print(gp2Twit)
+```
+
+As you can see there are differences between the three data sets.These phases seem to be in step with what one would expect for blogs verses news articles verses twitter feeds.  One thing of note is phrases like "Happy Valentine's Day" show up very frequently in twitter.   Not surprising to anyone who sees people posting holiday greetings on social media on the various holidays.
+
+The number of lines for each (blogs, news, twitter) are as follows
+
+```{r len, echo=FALSE, message=FALSE, warning=FALSE}
+print(lenBlogs)
+
+print(lenNews)
+
+print(lenTwit)
+```
+
+These are the summaries for all three documents in the corpus: Blogs, News and Twitter. 
+
+```{r summ, echo=FALSE, message=FALSE, warning=FALSE}
+
+print(summBlogs)
+
+print(summNews)
+
+print(summTwit)
+```
+
+In this case it's obvious each of these documents is quite large with blogs being the largest.   Notice though that twitter has the most number of lines.   This is probably caused by the fact we're looking at "tweets" rather than paragraphs. The size of blogs in particular is going to present a challenge as it would use more memory then is practical in some if not many cases.
+
+We will now look at the Document term matrix for a sample of all three documents.  This shows the count for each word in each line. We can them sum these columns to get a feel for the most common worksWe took a sample of 10,000 lines from each of the three documents to obtain these calculations.  This is a prime example of where it's not practical to use all the data as it's far to large for the calculations necessary for this calculations
+
+```{r dtm, echo=FALSE, message = FALSE, warning = FALSE}
+require(tm)
+inspect(dtmBlog)
+
+inspect(dtmNews)
+
+inspect(dtmTwit)
+```
+
+Using the matrices above we were able to calculate the most common words for each document.  The most common terms for Blogs is
+
+```{r dtm1, echo=FALSE, message = FALSE, warning = FALSE}
+
+tail(dfSortBlog,20)
+
+```
+One interesting thing here is we had the work weA (with a tilde) as one of the most commmon words.    I'm not sure why that is the case but it bears further investigation.
+
+The most common terms for News is
+
+```{r dtm2, echo=FALSE, message = FALSE, warning = FALSE}
+
+tail(dfSortNews,20)
+
+```
+
+
+The most common terms for Twitter  is
+```{r dtm3, echo=FALSE, message = FALSE, warning = FALSE}
+
+tail(dfSortTwit,20)
+
+```
+
+## Plans for the Predictive Model
+
+The next step is the predictive model.   The concept we will be using is a backoff model.   This means if we don't have a match for an n-gram (lets say a  tri-gram, three word phase as described in the beginning if the paper,)  we will look for a match for an n-1 gram.   This is what is meant by backoff.   Another factor is our training set is not inclusive off all possible combinations.   Therefore we need to use a discount factor for our probabilities.  For example, suppose the probablily of seeing "fox" after seeing "the quick brown" is 10%, might discount  the probability by 15% to take into account words that do not appear in the training set after "the quick brown" but might appear in the test set.  In that case thw probability would be 8.5% (.10*(1-0.85)).    In addition we are researching markov chains as a way to implement this as suggested by the assignment description.  One thought, given that some phrases are a lot more common is to sort the trigrams by how common they are in that particular document. This will allow the algorithm to find them more quickly.
+
+In therms of the Shiny app, we're going to start simply by having the user input a three word phase and provide a list of possible next words.  This concept may change as we go to implementation.
+
+
+There are challenges that will have to be overcome.  For example, as mentioned earlier (and seen in the courpus summary), the dataset is huge.    In some cases too big for the programming tools and system memory.  We already worked around it for calculating common words by taking a sample of the data for our calculations.  Another work around that had to be done is creating the tri-grams.  We had to create the input to the routine for creating the ngrams in pieces as it wouldn't work otherwise.
+
+
