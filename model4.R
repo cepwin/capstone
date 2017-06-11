@@ -1,4 +1,4 @@
-require(Matrix)
+library(Matrix)
 require(quanteda)
 require(readtext)
 require(data.table)
@@ -137,38 +137,48 @@ doWordsLoad<-function() {
 }
 
 doLoad2<-function() {
- ## text_blogs = readLines("./final/en_US/en_US.blogs.txt")
+  ##text_blogs = readLines("./final/en_US/en_US.blogs.txt")
   text_news = readLines("./final/en_US/en_US.news.txt")
   text_twit = readLines("./final/en_US/en_US.twitter.txt")
-##  lenBlogs <-length(text_blogs)
-##  groups<-(lenBlogs*.5)/10000 + 1
-##  lStrBlogs<-""
-##  for(i in 1:groups) {
-##    st<- (i-1)*10000 + 1
- ##   end<-min(c(i*10000,lenBlogs))
-##    lStrBlogs<- concatenate(lStrBlogs,concatenate(lapply(text_blogs[st:end],"[",1)))
-##  }
-##  print("loaded blogs")
-  
   lenNews <-length(text_news)
  ## groups<-(lenNews*.7)/10000 + 1
-  groups<-(lenNews)/10000 + 1
+  totgroups<-(lenNews/10000) + 1
+  groups<-((lenNews*.8)/10000) + 1
   lStrNews<-""
   for(i in 1:groups) {
     st<- (i-1)*10000 + 1
     end<-min(c(i*10000,lenNews))
     lStrNews<- concatenate(lStrNews,concatenate(lapply(text_news[st:end],"[",1)))
   }
+  lStrNewsTest<-""
+  for(i in (groups+1):totgroups) {
+    st<- (i-1)*10000 + 1
+    end<-min(c(i*10000,lenNews))
+    lStrNewsTest<- concatenate(lStrNewsTest,concatenate(lapply(text_news[st:end],"[",1)))
+  }
+  ng<-quanteda::tokenize(lStrNewsTest,ngrams=5,concatenator=" ", remove_punct=TRUE, remove_twitter=TRUE,remove_numbers=TRUE,remove_symbols=TRUE)
+  fwrite(ng,"testout")
+  lStrNewsTest=""
   print("loaded news")
   
   lenTwit <-length(text_twit)
-  groups<-(lenTwit)/10000 + 1
+  totgroups<-(lenTwit/10000) + 1
+  groups<-((lenTwit*.8)/10000) + 1
   lStrTwit<-""
   for(i in 1:groups) {
     st<- (i-1)*10000 + 1
     end<-min(c(i*10000,lenTwit))
     lStrTwit<- concatenate(lStrTwit,concatenate(lapply(text_twit[st:end],"[",1)))
   }
+  lStrTwitTest<-""
+  for(i in (groups+1):totgroups) {
+    st<- (i-1)*10000 + 1
+    end<-min(c(i*10000,lenTwit))
+    lStrTwitTest<- concatenate(lStrTwitTest,concatenate(lapply(text_twit[st:end],"[",1)))
+  }
+  ng<-quanteda::tokenize(lStrTwitTest,ngrams=5,concatenator=" ", remove_punct=TRUE, remove_twitter=TRUE,remove_numbers=TRUE,remove_symbols=TRUE)
+  fwrite(ng,"testout", append = TRUE)
+  lStrTwitTest=""
   print("loaded twitter")
  ## text_string<-c(lStrBlogs,lStrNews)
   text_string<-c(lStrNews,lStrTwit)
@@ -184,17 +194,8 @@ doLoad2<-function() {
     print("tokenized")
     myDfm<-dfm(ng)
     ng<-""
- ##   ng<-quanteda::tokenize(lStrNews,ngrams=i,concatenator=" ", remove_punct=TRUE, remove_twitter=TRUE,remove_numbers=TRUE,remove_symbols=TRUE)
- ##   print("tokenized")
-  ##  myDfm2<-dfm(ng)
-    
-  ##  ng<-quanteda::tokenize(lStrTwit,ngrams=i,concatenator=" ", remove_punct=TRUE, remove_twitter=TRUE,remove_numbers=TRUE,remove_symbols=TRUE)
-  ##  print("tokenized")
-  ##  myDfm3<-dfm(ng)
-    
-   ### myDfm<-rbind(myDfm1,myDfm2,myDfm3)
     x<-colSums(myDfm)
-    numfav<-as.integer(.25*length(x))
+    numfav<-as.integer(.3125*length(x))
     x1<-topfeatures(myDfm,numfav)
     v1<-as.vector(lapply(as.character(names(x1)),joins))
     v2<-unlist(lapply(as.character(names(x1)),lastToken))
