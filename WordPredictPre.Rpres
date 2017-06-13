@@ -1,0 +1,37 @@
+WordPredict - Capstone Project
+========================================================
+author: Wendy Sarrett
+date: 06/12/17
+autosize: true
+transition: rotate
+
+Introduction
+========================================================
+
+WordPredict purpose is to use nlp methods (In particular an attempt at backoff with Katz smoothing) to take a phrase and predict the next word
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+The Model
+========================================================
+
+```{r}
+summary(cars)
+```
+
+Additional Information
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Useage Information
+=======================================================
+Here is what WordPredict looks like
+
+![Image of WordPredict](smalltextpred1.png)
+***
+
