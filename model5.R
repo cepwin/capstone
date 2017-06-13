@@ -83,12 +83,13 @@ testalg<-function() {
   sumnumC<-0
   enthI<-0
   sumnumI<-0
+  timeavg<-0
   badword<-vector()
-  for(i in 2:items) {
+  for(i in 1:items) {
     tok<-quanteda::tokenize(testitems1[i],ngrams=1,remove_punct=TRUE, remove_twitter=TRUE,remove_numbers=TRUE,remove_symbols=TRUE)
     ans<-tok[[1]][6]
     phrase<-concatenate(as.vector(tok[[1]][1:5]))
-    res<-getNextWord(phrase)
+    timeavg<-timeavg + system.time(res<-getNextWord(phrase))
     if(is.atomic(res)) {
       word<-res
       prob<-0
@@ -114,7 +115,8 @@ testalg<-function() {
     percent<-(numCorrect/(numWrong+numCorrect))*100
     
     print(paste("Num correct: ", numCorrect," Num wrong: ",numWrong,"percent correct: ",percent,"Correct logP: ",enthC,"Incorrect LogP: ",enthI))
-  }
+    print(paste("timeavg: ",(timeavg/i)))
+    }
   print("the bad words were")
   print(badword)
   print(paste("the number of bad words were ", length(badword)))

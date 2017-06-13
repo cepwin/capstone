@@ -1,0 +1,50 @@
+WordPredict - Capstone Project
+========================================================
+author: Wendy Sarrett
+date: 06/13/17
+autosize: true
+transition: rotate
+
+Introduction
+========================================================
+
+WordPredict purpose is to use nlp methods (In particular an attempt at backoff with Katz smoothing) to take a phrase and predict the next word
+
+- A key part of the work was creating the n-gram tables...we were limited to 1gb due to shinyio's limitation.
+- We used SQLite to store our tables.   The work of creating the tables was done offline so the actual prediction is very quick...a user receives an answer within seconds (our tests indicate < 2 seconds on average.)
+- Experimentation showed that using the most common phases for the n-gram tables led to better result, trading off what percentage of the data is initially to create the n-grams verses what percentage of most common feature are selected for the final tables.
+
+The Model
+========================================================
+- <small>Our Model was based on Katz Backoff and We started with 5-grams and backed off from there</small>
+- <small>If the ngram was a match calculate the probability for each item (count - .5/ total count) and select the most common.  Note that only the match on the 5-gram (the initial ngram) will use this..otherwise the discount is used)</small>  
+- <small>If not found, go to the n-1 gram and the discount is 1-(count-0.5/total count) and prop = (count/total count)*discount. If you fail to match the 1-gram return "not found"</small>
+- <small>Key was selecting the right training set..settled with 80% of the news, 80% of the blogs and 70% of the tweets.From that we took 30% highest feature n-grams from each level</small>
+- <small>Accuracy was very much impacted by the size of the database.   If the database was  over 1gb the accuracy was greatly improved (some tests were 70-80% correct.)  My final database was 924mb. This makes sence given the algorithm depends on matching an ngram in the database.</small>
+
+Additional Information
+========================================================
+| Correct | Incorrect | Percent Correct |Not Found| Correct Sum Ln/N| Incorrect Sum Ln/N |
+|---------|-----------|-----------------|---------|-----------------|--------------------|
+| 781     | 2152      |  26.63          |  66     |  1.84           |   3.11             |
+
+- <small>The data we used was divided into a training (75%) and test set (25%.)  the training set was what was used to build the ngram database our algorithm relied upon. The test set was used to create the 5-grams for testing</small>
+- <small>We ran a test with 3000 random 5-grams selected from the test set.  We tracked the number right verses wrong as well as the log sum (cost function) for correct verses incorrect answers.   Note we left out those tests where nothing was found (66 out of the 3000 sample.)  This was 2.2% of the input and mostly due to bad data (misspellings,odd character at the end of the word, etc.) </small>
+- <small>The fact that the cost function for "correct" (1.84) is much less than the incorrect (3.11) indicates that it predicted correctly when it had a higher probability of being correct</small>
+
+Useage Information
+=======================================================
+Here is what WordPredict looks like
+
+![Image of WordPredict](smalltextpred1.png)
+***
+The link is at 
+https://cepwin.shinyapps.io/WordPredict/
+
+To use:
+-- Enter a phrase without puntuation or an double quotes 
+-- Click on Submit
+-- The predicted "Next Word" will appear under "Next Word"
+
+Outwardly it appears very simple but the hard work was in creating the ngram tables and writing the backoff algorithm
+
